@@ -1,0 +1,32 @@
+
+from fastapi import FastAPI, HTTPException
+from app.github_client import get_repository, get_contributors
+from app.analyzer import analyze_repository
+
+app = FastAPI(
+    title="OpenSource Health Analyzer",
+    version="0.1.0"
+)
+
+@app.get("/")
+def home():
+    return {"message": "OpenSource Health Analyzer is running"}
+
+@app.get("/analyze/{owner}/{repo}")
+def analyze(owner: str, repo: str):
+    try:
+        data = get_repository(owner, repo)
+        contributors = get_contributors(owner, repo)
+
+        result = analyze_repository(data, contributors)
+
+        return {
+            "repository": data["full_name"],
+            "health": result
+        }
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=502,
+            detail=str(error)
+        )
